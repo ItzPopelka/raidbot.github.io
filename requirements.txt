@@ -1,3 +1,4 @@
+# install the required libraries using "pip install -r requirements.txt" in your terminal
 discord.py
 dhooks==1.1.4
 requests==2.25.1
