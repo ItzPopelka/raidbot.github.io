@@ -37,7 +37,7 @@ async def load_extensions():
 async def main():
     async with bot:
         await load_extensions()
-        await bot.start("MTQ2NzU4MjMxMjMxMjA4MjQ5Mg.GrMlKd.vkGoFDNBpN950jMYh_Kop0gYPMZQrIT66Ccjqk")
+        await bot.start("TOKEN_HERE")
 
 if __name__ == "__main__":
     import asyncio
