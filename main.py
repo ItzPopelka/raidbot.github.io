@@ -3,6 +3,9 @@ from discord.ext.commands import *
 from discord.ext import commands
 import asyncio
 import os
+import json
+
+token = json.load(open("token.json", "r"))["TOKEN"]
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='r?', intents=intents)
@@ -37,7 +40,7 @@ async def load_extensions():
 async def main():
     async with bot:
         await load_extensions()
-        await bot.start(os.getenv('TOKEN'))
+        await bot.start(token)
 
 if __name__ == "__main__":
     import asyncio
