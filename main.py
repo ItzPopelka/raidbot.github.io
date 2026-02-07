@@ -63,7 +63,7 @@ async def load_extensions():
 # =======================================
 # ============= BOT START ===============
 # =======================================
-# dont change anything here, this is just the code to start the bot and load the loaded extensions
+# dont change anything here, this is just the code to start the bot and use the loaded extensions
 async def main():
     async with bot:
         await load_extensions()

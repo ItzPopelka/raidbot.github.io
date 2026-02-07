@@ -171,7 +171,7 @@ This repository is intended to showcase **Discord API automation techniques**, n
 
 ## 📄 License
 
-Educational / demonstration use only.
+Educational / demonstration use only. If you want to edit this, mention me in the README.
 
 ---
 
