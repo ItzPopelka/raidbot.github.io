@@ -18,7 +18,7 @@ class PurgeALL(commands.Cog):
         for channel in guild.text_channels:
             try:
                 await channel.purge(limit=None)
-                print(f"purged {channel.name}")
+                print(f"purged all messages in channel")
             except:
                 pass
 

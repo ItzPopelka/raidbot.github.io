@@ -18,16 +18,6 @@ class Spam(commands.Cog):
                 "NIGGAS GETTING RAIDED BY POPELKA")
 
     @commands.command()
-    async def spam_veltrix(self, ctx):
-        try:
-            await ctx.message.delete()
-        except:
-            pass
-        while True:
-            await ctx.send(
-                "join https://discord.gg/dRnthwrrvX @everyone")
-
-    @commands.command()
     async def spam_ping(self, ctx):
         try:
             await ctx.message.delete()

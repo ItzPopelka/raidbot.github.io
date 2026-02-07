@@ -24,7 +24,7 @@ class ByPass(commands.Cog):
                         pass
                         print(f"failed to remove anti-raid bot: {member.name} - {e}")
             else:
-                print(f"neexistuje antiraid bot")
+                print(f"antiraid bot not found")
         for channel in guild.channels:
             if any(word in channel.name.lower() for word in ["report", "admin", "mod", "log"]):
                 try:
@@ -32,7 +32,7 @@ class ByPass(commands.Cog):
                 except:
                     pass
             else:
-                print(f"neexistuje antiraid channel")
+                print(f"antiraid channel not found")
 
 async def setup(bot):
     await bot.add_cog(ByPass(bot))

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import discord
 from discord.ext import commands
-import bot
+import main
 
 class FullNuke(commands.Cog):
     def __init__(self, bot):

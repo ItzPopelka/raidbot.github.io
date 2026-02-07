@@ -1,11 +1,8 @@
-# this file has commands stop and restart
-
-
 import discord
 from discord.ext import commands
 import os
 import sys
-import bot
+import main
 
 class System(commands.Cog):
     def __init__(self, bot):

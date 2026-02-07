@@ -21,8 +21,8 @@ A feature-rich Discord selfbot written in Python, designed to demonstrate variou
 
 ```
 RaidBOT/
-├── 📁 assets/          # Static resources (images, etc.)
-├── 📁 funcs/           # All command modules
+├── 📁 assets/          # static resources (images, etc.)
+├── 📁 funcs/           # all command modules
 │   ├── ban.py
 │   ├── bypass.py
 │   ├── channels.py
@@ -38,11 +38,10 @@ RaidBOT/
 │   ├── spam.py
 │   ├── system.py
 │   └── video.py
-├── 📁 web/             # Web panel files (PHP)
-│   └── index.php
-├── 🐍 bot.py           # Main bot launcher and core
-├── 📄 requirements.txt # Python dependencies
-└── 📄 README.md        # This file
+├── 📨 index.html       # ip logger web
+├── 🐍 bot.py           # main bot launcher and core
+├── 📄 requirements.txt # python dependencies
+└── 📄 README.md        # this file
 ```
 
 ## 🚀 Quick Start
@@ -99,8 +98,8 @@ async def load_extensions():
     for ext in extensions:
         try:
             await bot.load_extension(f"{funcs_dir}.{ext}")
-            print(f"✅ Loaded: {ext}")
+            print(f"loaded: {ext}")
         except Exception as e:
-            print(f"❌ Failed to load {ext}: {e}")
+            print(f"failed to load {ext}: {e}")
 ```
 
