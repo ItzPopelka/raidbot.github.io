@@ -46,9 +46,9 @@ pip install -r requirements.txt
 * Enable **Server Members Intent** and **Message Content Intent**
 
 4. **Configure token**
-- 1. Create token.json file
-- 2. Paste this in: ```{"TOKEN": "YOUR_BOT_TOKEN"}```
-- 3. Replace "YOUR_BOT_TOKEN" with your actual token
+- Create token.json file
+- Paste this in: ```{"TOKEN": "YOUR_BOT_TOKEN"}```
+- Replace "YOUR_BOT_TOKEN" with your actual token
 
 > ❗ Never hardcode or publish your token.
 
