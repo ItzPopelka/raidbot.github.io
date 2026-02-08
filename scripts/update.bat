@@ -6,7 +6,7 @@ echo ========================================
 echo.
 REM Set paths
 set "BACKUP_DIR=backup_%DATE:~-4%-%DATE:~3,2%-%DATE:~0,2%_%TIME:~0,2%-%TIME:~3,2%"
-set "GIT_REPO=https://github.com/ItzPopelka/raidbot.github.io"
+set "GIT_REPO=https://github.com/ItzPopelka/raidbot.git"
 set "EXCLUDE_FILES=token.json assets/pfp.webp"
 echo Creating backup directory...
 mkdir "%BACKUP_DIR%"

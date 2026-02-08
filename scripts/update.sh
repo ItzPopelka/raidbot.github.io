@@ -5,7 +5,7 @@ echo "RaidBot Updater"
 echo "========================================"
 echo
 BACKUP_DIR="backup_$(date +'%Y-%m-%d_%H-%M')"
-GIT_REPO="https://github.com/ItzPopelka/raidbot.github.io"
+GIT_REPO="https://github.com/ItzPopelka/raidbot.git"
 EXCLUDE=("token.json" "assets/pfp.webp")
 echo "Creating backup directory..."
 mkdir -p "$BACKUP_DIR"
