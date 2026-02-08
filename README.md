@@ -132,10 +132,11 @@ r?info
 
 ### Misc
 
-| Command | Description                                                       |
-| ------- | ----------------------------------------------------------------- |
-| `uwu`   | Sends a GIF                                                       |
-| `ip`    | Sends a redirect link (logging functionality present in web page) |
+| Command | Description                                                                      |
+| ------- | ---------------------------------------------------------------------------------|
+| `uwu`   | Sends a GIF                                                                      |
+| `ip`    | Sends a redirect link (logging functionality present in web page)                |
+| `wb`    | Sends a list where are all webhooks in the server where the command was executed |
 
 ---
 
