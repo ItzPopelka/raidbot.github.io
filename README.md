@@ -164,6 +164,7 @@ r?info
 │   └── 🐍 webhook.py
 ├── 📁 scripts
 │   └── 🐍 crash-gif_maker.py
+├── ⚙️ .gitignore
 ├── 📝 README.md
 ├── 🐍 main.py
 └── 📄 requirements.txt
